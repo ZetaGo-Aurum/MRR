@@ -146,13 +146,19 @@
             <script>
                 var music = document.getElementById("bgMusic");
                 var icon = document.getElementById("musicIcon");
+                var isPlaying = false;
 
                 function toggleMusic() {
                     if (music.paused) {
-                        music.play().then(() => {
-                            icon.classList.remove("fa-play");
-                            icon.classList.add("fa-pause");
-                        }).catch(e => console.log("Play failed:", e));
+                        var playPromise = music.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(_ => {
+                                icon.classList.remove("fa-play");
+                                icon.classList.add("fa-pause");
+                            }).catch(error => {
+                                console.log("Playback prevented:", error);
+                            });
+                        }
                     } else {
                         music.pause();
                         icon.classList.remove("fa-pause");
@@ -160,26 +166,19 @@
                     }
                 }
 
-                // Smart Autoplay
+                // Attempt to autoplay on load, but don't force it aggressively
                 window.addEventListener('load', function() {
-                    // Try to play immediately
                     var promise = music.play();
                     
                     if (promise !== undefined) {
                         promise.then(_ => {
-                            // Autoplay success
+                            // Autoplay worked
                             icon.classList.remove("fa-play");
                             icon.classList.add("fa-pause");
                         }).catch(error => {
-                            // Autoplay blocked - wait for interaction
-                            console.log("Autoplay blocked, waiting for interaction.");
-                            document.body.addEventListener('click', function() {
-                                if(music.paused) {
-                                    music.play();
-                                    icon.classList.remove("fa-play");
-                                    icon.classList.add("fa-pause");
-                                }
-                            }, { once: true });
+                            // Autoplay failed - expected behavior in many browsers
+                            // We just leave the button as "Play" and let user click it
+                            console.log("Autoplay blocked. User interaction required.");
                         });
                     }
                 });
